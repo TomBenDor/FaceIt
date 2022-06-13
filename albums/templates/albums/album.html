@@ -1,0 +1,100 @@
+{% extends "users/base.html" %}
+{% block content %}
+    <main>
+        <section class="py-5 text-left container-lg" style="padding: 30px 15px 30px 15px !important;">
+            <div class="row py-lg-5" style="padding: 0 0 0 0 !important;">
+                <div class="col-lg-6 col-md-8">
+                    <h1 class="page-title">{{ title }}</h1>
+                    <p class="lead text-muted">{{ description }}</p>
+                    <form method="POST" enctype="multipart/form-data" id="photo-upload-form">
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            <input type="file" name="image" accept=".png, .jpg, .jpeg" id="image-upload">
+                            <script>
+                                document.getElementById("image-upload").onchange = function () {
+                                    document.getElementById("photo-upload-form").submit();
+                                };
+                            </script>
+                        </fieldset>
+                    </form>
+                    {% if not read_only %}
+                        <button type="button" class="colorful-red-orange-button"
+                                onclick="document.getElementById('image-upload').click()">
+                            <i class="fa fa-upload"></i>
+                            <span class="text">Upload Photo</span>
+                        </button>
+                        &nbsp;
+                    {% endif %}
+                    {% if edit_link %}
+                        <a href="{{ edit_link }}" class="colorful-blue-button">
+                            <i class="fa fa-edit"></i>
+                            <span class="text">Edit</span>
+                        </a>
+                    {% endif %}
+                    <form method="POST" id="photo-remove-form">
+                        {% csrf_token %}
+                        <fieldset>
+                            <input type="hidden" id="photo-to-remove" name="id">
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </section>
+        {% if not photos %}
+            <section class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="alert alert-info center">
+                            <h4>
+                                <i class="fa fa-info-circle"></i>
+                                &nbsp;
+                                No photos here, yet.
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+        <section class="container gallery">
+            {% for photo in photos %}
+                <span class="gallery__item" id="{{ photo.pk }}">
+                {% if request.user == photo.owner %}
+                    <a href="{% url 'photo' photo.pk %}" class="gallery__link">
+                {% else %}
+                    <a class="gallery__link">
+                {% endif %}
+                    <span class="gallery__thumb">
+                            <img src="{% url 'album-photo-image' album_id photo.pk %}"
+                                 alt=""
+                                 class="gallery__image">
+{#                                 onload="reveal('{{ photo.pk }}')">#}
+                        {% if not read_only %}
+                            <text-muted class="gallery__caption">By {{ photo.owner.username }}</text-muted>
+                            <button type="button" onclick="deletePhoto('{{ photo.pk }}'); return false;"
+                                    class="gallery__remove">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                        {% endif %}
+                        </span>
+                    </a>
+                </span>
+            {% endfor %}
+        </section>
+        <script>
+            function reveal(id) {
+                ScrollReveal().reveal("#" + id, {
+                    duration: 1000,
+                    reset: false,
+                    distance: '20px',
+                    scale: 0.75,
+                    viewFactor: 0.5,
+                });
+            }
+
+            function deletePhoto(photoId) {
+                document.getElementById("photo-to-remove").value = photoId;
+                document.getElementById("photo-remove-form").submit();
+            }
+        </script>
+    </main>
+{% endblock content %}

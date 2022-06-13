@@ -1,0 +1,19 @@
+{% extends "users/base.html" %}
+{% load crispy_forms_filters %}
+{% block content %}
+    <main>
+        <section class="py-5 text-left container-lg" style="padding: 30px 15px 30px 15px !important;">
+            <div class="row py-lg-5" style="padding: 0 0 0 0 !important;">
+                <div class="col-lg-6 col-md-8">
+                    <h1 class="page-title">Create a new album</h1>
+                    <p class="lead text-muted">Give your new album a title and a description.</p>
+                    <form method="POST" enctype="multipart/form-data" id="album-create-form">
+                        {% csrf_token %}
+                        {{ form | crispy }}
+                    </form>
+                    <button type="submit" class="btn btn-primary" form="album-create-form">Create Album</button>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock content %}

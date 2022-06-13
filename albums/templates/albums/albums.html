@@ -1,0 +1,45 @@
+{% extends "users/base.html" %}
+{% block content %}
+    <main>
+        <section class="container" style="padding: 30px 15px 30px 15px !important;">
+            <div class="row py-lg-5" style="padding: 0 0 0 0 !important;">
+                <div class="col-lg-6 col-md-8">
+                    <h1 class="page-title">Your Albums</h1>
+                    <p class="lead text-muted">All your albums will appear here.</p>
+                    <div style="padding-top: 10px"></div>
+                    <a href="{% url 'create-album' %}" class="colorful-red-orange-button">
+                        <i class="fa fa-plus"></i>
+                        <span class="text">Create Album</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+        <section class="container albums">
+            {% for title, albums in albums_dict %}
+                {% if albums %}
+                    <h4 class="albums__title">{{ title }}</h4>
+                    {% for album, access in albums %}
+                        <div class="albums__item">
+                            <span class="albums__item__title">
+                                <a href="{% url 'album' album.id %}" class="albums__item__title__link">
+                                    <h4>{{ album.title }}</h4>
+                                </a>
+                            </span>
+                            <span class="albums__item__owner">
+                                <h6>By {{ album.owner.username }}</h6>
+                            </span>
+                            {% if access == 3 %}
+                                <span class="albums__item__controls">
+                                    <a href="{% url 'album-edit' album.id %}"
+                                       class="albums__item__controls__edit_button">
+                                        <i class="fa fa-pencil"></i>
+                                    </a>
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </section>
+    </main>
+{% endblock content %}
