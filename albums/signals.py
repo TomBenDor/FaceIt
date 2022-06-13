@@ -1,6 +1,4 @@
-from PIL import Image
 from background_task import background
-from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -22,18 +20,9 @@ def identify_faces(photo_pk):
             person.nameable = True
         person.save()
 
-    try:
-        img = Image.open("." + photo.image.url)
-    except ValueError:
-        return
-    if img.height > settings.MAX_IMAGE_SIZE or img.width > settings.MAX_IMAGE_SIZE:
-        new_img = (settings.MAX_IMAGE_SIZE, settings.MAX_IMAGE_SIZE)
-        img.thumbnail(new_img)
-        img.save("." + photo.image.url)
 
-
-# Idenify faces in photo
+# Identify faces in photo
 @receiver(post_save, sender=Photo)
 def process_image_on_upload(sender, instance, created, **kwargs):
     if created:
-        identify_faces.now(str(instance.pk))  # TODO: use background task
+        identify_faces(str(instance.pk))

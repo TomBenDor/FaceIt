@@ -5,14 +5,7 @@ from azure.cognitiveservices.vision.face import FaceClient
 from azure.cognitiveservices.vision.face.models import APIErrorException
 from msrest.authentication import CognitiveServicesCredentials
 
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+from utils import Singleton
 
 
 class FaceAPI(metaclass=Singleton):
@@ -25,13 +18,13 @@ class FaceAPI(metaclass=Singleton):
     def create_person_group(self, id, name):
         self.__face_client.person_group.create(id, name)
 
-    def create_person(self, person_group_id, name, photo_stream, rect):
+    def create_person(self, person_group_id, name, photo_url, rect):
         rect = [rect.left, rect.top, rect.width, rect.height]
         person = self.__face_client.person_group_person.create(person_group_id, name)
-        self.__face_client.person_group_person.add_face_from_stream(person_group_id,
-                                                                    person.person_id,
-                                                                    photo_stream,
-                                                                    target_face=rect)
+        self.__face_client.person_group_person.add_face_from_url(person_group_id,
+                                                                 person.person_id,
+                                                                 photo_url,
+                                                                 target_face=rect)
         return person.person_id
 
     def train_person_group(self, person_group_id):
@@ -43,7 +36,7 @@ class FaceAPI(metaclass=Singleton):
 
     def identify_faces(self, person_group_id, image_url):
         # Detect faces in the image
-        faces = self.__face_client.face.detect_with_stream(open("." + image_url, 'rb'))
+        faces = self.__face_client.face.detect_with_url(image_url)
 
         # Identify the faces
         for face in faces:
@@ -52,7 +45,9 @@ class FaceAPI(metaclass=Singleton):
                 possible_persons = self.__face_client.face.identify([face.face_id], person_group_id)
             except APIErrorException as e:
                 # Person group training hasn't completed.
-                person_id = self.create_person(person_group_id, f"{face.face_id}", open("." + image_url, 'rb'),
+                person_id = self.create_person(person_group_id,
+                                               f"{face.face_id}",
+                                               image_url,
                                                face.face_rectangle)
                 self.train_person_group(person_group_id)
             else:
@@ -61,8 +56,9 @@ class FaceAPI(metaclass=Singleton):
                     person_id = possible_persons[0].candidates[0].person_id
                 else:
                     # No one identified
-                    person_id = self.create_person(person_group_id, f"{face.face_id}",
-                                                   open("." + image_url, 'rb'),
+                    person_id = self.create_person(person_group_id,
+                                                   f"{face.face_id}",
+                                                   image_url,
                                                    face.face_rectangle)
                     self.train_person_group(person_group_id)
 

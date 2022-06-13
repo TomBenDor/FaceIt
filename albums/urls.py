@@ -1,7 +1,6 @@
 from django.http import HttpResponseNotFound
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import path
-from django.views.static import serve
 
 from .models import Photo, Album
 from .utils import get_access_to_album
@@ -12,20 +11,21 @@ from .views import PhotoView, AlbumCreateView, home_view, AlbumsView, my_photos_
 def get_album_photo_image(request, album_pk, photo_pk):
     photo = get_object_or_404(Photo, pk=photo_pk)
     if request.user == photo.owner:
-        return serve(request, photo.image.url, document_root='')
+        return redirect(photo.image.url)
 
     album = get_object_or_404(Album, pk=album_pk)
 
     if album.photos.filter(pk=photo.pk).exists() and get_access_to_album(request.user, album):
-        return serve(request, photo.image.url, document_root='')
+        return redirect(photo.image.url)
 
     return HttpResponseNotFound()
 
 
 def get_photo(request, pk):
     photo = get_object_or_404(Photo, pk=pk)
+
     if request.user == photo.owner:
-        return serve(request, photo.image.url, document_root='')
+        return redirect(photo.image.url)
 
     return HttpResponseNotFound()
 
