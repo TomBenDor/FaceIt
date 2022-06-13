@@ -66,16 +66,19 @@ body {
 .gallery {
     line-height: 0;
     -webkit-column-count: 5; /* split it into 5 columns */
-    -webkit-column-gap: 10px; /* give it a 5px gap between columns */
+    -webkit-column-gap: 0; /* give it a 5px gap between columns */
     -moz-column-count: 5;
-    -moz-column-gap: 10px;
+    -moz-column-gap: 0;
     column-count: 5;
-    column-gap: 10px;
+    column-gap: 0;
     user-select: none;
 
     &__item {
         display: block;
         break-inside: avoid !important;
+        padding-top: 8px;
+        padding-left: 5px;
+        padding-right: 5px;
     }
 
     @media (max-width: 1200px) {
@@ -172,17 +175,15 @@ body {
     }
 
     &__remove {
-        display: inline;
         position: absolute;
         top: -10px;
         right: -10px;
-        border-radius: 10em;
+        border-radius: 50%;
         padding: 2px 6px 3px;
         font: 700 21px/20px sans-serif;
         background: #555;
         border: 3px solid #fff;
         color: #FFF;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3);
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         opacity: 0;
 

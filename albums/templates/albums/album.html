@@ -63,34 +63,23 @@
                 {% else %}
                     <a class="gallery__link">
                 {% endif %}
-                    <span class="gallery__thumb">
+                    <div class="gallery__thumb">
                             <img src="{% url 'album-photo-image' album_id photo.pk %}"
                                  alt=""
                                  class="gallery__image">
-{#                                 onload="reveal('{{ photo.pk }}')">#}
                         {% if not read_only %}
                             <text-muted class="gallery__caption">By {{ photo.owner.username }}</text-muted>
                             <button type="button" onclick="deletePhoto('{{ photo.pk }}'); return false;"
                                     class="gallery__remove">
                                     <i class="fa fa-trash"></i>
-                                </button>
+                            </button>
                         {% endif %}
-                        </span>
+                        </div>
                     </a>
                 </span>
             {% endfor %}
         </section>
         <script>
-            function reveal(id) {
-                ScrollReveal().reveal("#" + id, {
-                    duration: 1000,
-                    reset: false,
-                    distance: '20px',
-                    scale: 0.75,
-                    viewFactor: 0.5,
-                });
-            }
-
             function deletePhoto(photoId) {
                 document.getElementById("photo-to-remove").value = photoId;
                 document.getElementById("photo-remove-form").submit();
