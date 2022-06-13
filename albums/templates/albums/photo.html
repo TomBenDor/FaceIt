@@ -10,7 +10,7 @@
             </div>
         </section>
         <div class="container-md">
-            <img src="{% url 'photo-image' object.pk %}" class="photo-view">
+            <img src="{{ object.image.url }}" class="photo-view">
             {#            <form method="POST" enctype="multipart/form-data" id="">#}
             {#                        {% csrf_token %}#}
             {#                        {{ form | crispy }}#}

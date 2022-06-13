@@ -64,7 +64,7 @@
                     <a class="gallery__link">
                 {% endif %}
                     <div class="gallery__thumb">
-                            <img src="{% url 'album-photo-image' album_id photo.pk %}"
+                            <img src="{{ photo.image.url }}"
                                  alt=""
                                  class="gallery__image">
                         {% if not read_only %}
