@@ -6,15 +6,17 @@ from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, TemplateView
+from django.views.generic.edit import FormMixin
 
 from .forms import PhotoCreateForm, AlbumForm, PhotoAlbumsForm
 from .models import Album, Photo, Permission, Person
 from .utils import get_access_to_album
 
 
-class PhotoView(UserPassesTestMixin, DetailView):
+class PhotoView(UserPassesTestMixin, FormMixin, DetailView):
     model = Photo
     template_name = 'albums/photo.html'
+    form_class = PhotoAlbumsForm
 
     def test_func(self):
         return self.request.user == self.get_object().owner
@@ -25,10 +27,26 @@ class PhotoView(UserPassesTestMixin, DetailView):
 
         return super(PhotoView, self).handle_no_permission()
 
-    def get_context_data(self, **kwargs):
-        context = super(PhotoView, self).get_context_data(**kwargs)
-        context['form'] = PhotoAlbumsForm()
-        return context
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('photo', kwargs={'pk': self.object.pk})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['photo'] = self.get_object()
+        kwargs['initial'] = {'albums': Album.objects.filter(photos__in=[self.get_object()])}
+        return kwargs
 
 
 class AlbumCreateView(LoginRequiredMixin, CreateView):
@@ -51,14 +69,15 @@ class AlbumEditView(UserPassesTestMixin, UpdateView):
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            return HttpResponseNotFound()
+            messages.warning(self.request, "You don't have permission to edit this album.")
+            return redirect('home')
 
         return super(AlbumEditView, self).handle_no_permission()
 
     def get_initial(self):
         initial = super(AlbumEditView, self).get_initial()
         permissions = Permission.objects.filter(album=self.get_object())
-        d = dict(Permission.AccessLevel.choices)
+        d = {1: 'View', 2: 'Edit', 3: 'Manage'}
         initial['permissions'] = '\n'.join(f"{p.user.username}:{d[p.access]}" for p in permissions)
         return initial
 
@@ -84,7 +103,8 @@ class GalleryView(View):
 
     def post(self, request):
         if self.read_only:
-            return HttpResponseNotFound()
+            messages.warning(request, "You don't have permission to edit this album.")
+            return redirect('home')
 
         if 'id' in request.POST:
             photo = get_object_or_404(Photo, pk=request.POST['id'])

@@ -26,11 +26,31 @@ class PhotoCreateForm(forms.ModelForm):
         return photo
 
 
+class AlbumsMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.title} (Created by {obj.owner.username})"
+
+
 class PhotoAlbumsForm(forms.Form):
-    albums = forms.ModelMultipleChoiceField(queryset=Album.objects.all(),
-                                            widget=forms.CheckboxSelectMultiple,
-                                            required=False,
-                                            label='')
+    albums = AlbumsMultipleChoiceField(queryset=Album.objects.all(),
+                                       widget=forms.CheckboxSelectMultiple,
+                                       required=False,
+                                       label='')
+
+    def __init__(self, *args, **kwargs):
+        self.photo = kwargs.pop('photo') if 'photo' in kwargs else None
+        super(PhotoAlbumsForm, self).__init__(*args, **kwargs)
+
+        self.fields['albums'].queryset = Album.objects.filter(owner=self.photo.owner) | Album.objects.filter(
+            permission__user=self.photo.owner, permission__access__gt=Permission.AccessLevel.READ)
+
+    def save(self, commit=True):
+        albums = self.cleaned_data['albums']
+        for album in self.fields['albums'].queryset:
+            album.photos.remove(self.photo)
+        for album in albums:
+            album.photos.add(self.photo)
+        return self.photo
 
 
 def validate_permissions(value):
