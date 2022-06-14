@@ -37,7 +37,7 @@ FaceIt requires the following environment variables:
 - `DB_HOST` - The host of the database
 - `DB_PORT` - The port of the database
 
-If you have everything set up, you can clone the repository and run the following command:
+If you have everything set up, you can clone the repository and install the requirements:
 
 `pip install -r requirements.txt`
 
