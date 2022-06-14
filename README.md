@@ -15,7 +15,7 @@
 # Technical details
 
 - Written in `Python` using the `Django` framework.
-- Designed with `HTML` and 
+- Designed with `HTML` and `SCSS`
 - Running on `Heroku`
 - `PostgreSQL` database hosted on `AWS`
 - `AWS S3` for storing photos
