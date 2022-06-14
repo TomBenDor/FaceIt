@@ -49,4 +49,4 @@ python manage.py collectstatic --noinput
 python manage.py runserver 0.0.0.0:8080
 ```
 
-Make sure to run `python manage.py process_tasks` to enable face recognition.
+Make sure to run `python manage.py process_tasks` to enable face recognition and email valiation.
