@@ -561,16 +561,26 @@
                                                 </tr>
                                                 <tr>
                                                     <td class="es-p35t es-p35b es-p10r es-p10l" align="center"><span
-                                                            class="es-button-border"><a href="https://
+                                                            class="es-button-border"><a href="http://
                                                             {{ domain }}{% url 'activate' uidb64=uid token=token %}"
                                                                                         class="es-button"
                                                                                         target="_blank"
                                                                                         style="border-width: 15px 30px"> Confirm Account</a></span>
                                                     </td>
                                                 </tr>
-                                                <td class="es-p20t es-p30r es-p30l es-m-txt-l" align="left"><p>If you
-                                                    have any questions, just reply to this email—we're always happy to
-                                                    help out.</p></td>
+                                                <td class="es-p20t es-p30r es-p30l es-m-txt-l" align="left">
+                                                    <p>
+                                                        In case this button doesn't work, copy and paste the link below
+                                                        into your browser.
+                                                        <br>
+                                                        <br>
+                                                        {{ domain }}{% url 'activate' uidb64=uid token=token %}
+                                                    </p>
+                                                    <p>
+                                                        If you have any questions, just reply to this email—we're always
+                                                        happy to help out.
+                                                    </p>
+                                                </td>
                                                 </tr>
                                                 <tr>
                                                     <td class="es-p20t es-p40b es-p30r es-p30l es-m-txt-l" align="left">
