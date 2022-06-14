@@ -44,7 +44,7 @@ If you have everything set up, you can clone the repository and run the followin
 Now you can run the application:
 
 ```
-python manageee.py migrate
+python manage.py migrate
 python manage.py collectstatic --noinput
 python manage.py runserver 0.0.0.0:8080
 ```
