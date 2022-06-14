@@ -1,10 +1,11 @@
 {% extends "users/base.html" %}
+{% load static %}
 {% load crispy_forms_tags %}
 {% block content %}
     <section id="banner">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-lg">
                     <form method="POST">
                         {% csrf_token %}
                         <fieldset class="form-group">
@@ -15,6 +16,9 @@
                             <button class="btn btn-secondary" type="submit">Log in</button>
                         </div>
                     </form>
+                </div>
+                <div class="col-md">
+                    <img alt="logo" class="center-content" src="{% static 'users/logo.png' %}">
                 </div>
             </div>
         </div>
