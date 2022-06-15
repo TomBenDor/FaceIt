@@ -150,7 +150,7 @@ def album_view(request, pk):
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=True,
-                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                   photos=[(photo, f"By {photo.owner.pk}", None)
                                            for photo in album.photos.all()])(request)
 
     if access == Permission.AccessLevel.WRITE:
