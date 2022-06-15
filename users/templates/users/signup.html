@@ -1,11 +1,12 @@
 {% extends "users/base.html" %}
+{% load static %}
 {% load crispy_forms_filters %}
 {% load crispy_forms_tags %}
 {% block content %}
     <section id="banner">
         <div class="container">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-lg">
                     <form method="POST">
                         {% csrf_token %}
                         <fieldset class="form-group">
@@ -17,15 +18,10 @@
                         </div>
                     </form>
                 </div>
+                <div class="col-md">
+                    <img alt="logo" class="center-content" src="{% static 'users/logo.png' %}">
+                </div>
             </div>
         </div>
     </section>
-    {#    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">#}
-    {#        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">#}
-    {#            <stop offset="0%" style="stop-color:#00b09b;stop-opacity:1" />#}
-    {#            <stop offset="100%" style="stop-color:#96c93d;stop-opacity:1" />#}
-    {#        </linearGradient>#}
-    {#        <path fill="url(#grad1)" fill-opacity="1"#}
-    {#        d="M0,96L48,101.3C96,107,192,117,288,101.3C384,85,480,43,576,42.7C672,43,768,85,864,96C960,107,1056,85,1152,90.7C1248,96,1344,128,1392,144L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>#}
-    {#    </svg>#}
 {% endblock content %}

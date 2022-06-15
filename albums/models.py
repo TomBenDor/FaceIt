@@ -8,7 +8,7 @@ from users.models import User
 
 
 def get_upload_path(instance, filename):
-    return os.path.join('photos', str(instance.owner.pk), filename)
+    return os.path.join('photos', str(instance.owner.pk), str(uuid.uuid4()))
 
 
 class Album(models.Model):
@@ -45,7 +45,9 @@ class Permission(models.Model):
 
 class Photo(models.Model):
     id = models.CharField(primary_key=True, default=uuid.uuid4, editable=False, max_length=256)
+
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
     image = models.ImageField(upload_to=get_upload_path)
 
     def delete(self, **kwargs):
@@ -64,3 +66,5 @@ class Person(models.Model):
     photos = models.ManyToManyField(Photo, blank=True)
 
     nameable = models.BooleanField(default=False)
+
+    thumbnail = models.ForeignKey(Photo, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='thumbnail')

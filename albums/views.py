@@ -2,19 +2,20 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.http import HttpResponseNotFound
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, TemplateView
+from django.views.generic.edit import FormMixin
 
 from .forms import PhotoCreateForm, AlbumForm, PhotoAlbumsForm
 from .models import Album, Photo, Permission, Person
 from .utils import get_access_to_album
 
 
-class PhotoView(UserPassesTestMixin, DetailView):
+class PhotoView(UserPassesTestMixin, FormMixin, DetailView):
     model = Photo
     template_name = 'albums/photo.html'
+    form_class = PhotoAlbumsForm
 
     def test_func(self):
         return self.request.user == self.get_object().owner
@@ -25,10 +26,26 @@ class PhotoView(UserPassesTestMixin, DetailView):
 
         return super(PhotoView, self).handle_no_permission()
 
-    def get_context_data(self, **kwargs):
-        context = super(PhotoView, self).get_context_data(**kwargs)
-        context['form'] = PhotoAlbumsForm()
-        return context
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('photo', kwargs={'pk': self.object.pk})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['photo'] = self.get_object()
+        kwargs['initial'] = {'albums': Album.objects.filter(photos__in=[self.get_object()])}
+        return kwargs
 
 
 class AlbumCreateView(LoginRequiredMixin, CreateView):
@@ -51,14 +68,15 @@ class AlbumEditView(UserPassesTestMixin, UpdateView):
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            return HttpResponseNotFound()
+            messages.warning(self.request, "You don't have permission to edit this album.")
+            return redirect('home')
 
         return super(AlbumEditView, self).handle_no_permission()
 
     def get_initial(self):
         initial = super(AlbumEditView, self).get_initial()
         permissions = Permission.objects.filter(album=self.get_object())
-        d = dict(Permission.AccessLevel.choices)
+        d = {1: 'View', 2: 'Edit', 3: 'Manage'}
         initial['permissions'] = '\n'.join(f"{p.user.username}:{d[p.access]}" for p in permissions)
         return initial
 
@@ -67,7 +85,8 @@ def home_view(request):
     return redirect('my-albums')
 
 
-class GalleryView(View):
+class GalleryView(TemplateView):
+    template_name = 'albums/album.html'
     title = ''
     description = ''
     photos = None
@@ -75,16 +94,20 @@ class GalleryView(View):
     handle_remove_photo = None
     handle_add_photo = None
     edit_link = None
-    album_id = None
 
-    def get(self, request):
-        return render(request, 'albums/album.html',
-                      {'title': self.title, 'description': self.description, 'photos': self.photos,
-                       'read_only': self.read_only, 'edit_link': self.edit_link, 'album_id': self.album_id})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'title': self.title,
+                        'description': self.description,
+                        'photos': self.photos,
+                        'read_only': self.read_only,
+                        'edit_link': self.edit_link})
+        return context
 
     def post(self, request):
         if self.read_only:
-            return HttpResponseNotFound()
+            messages.warning(request, "You don't have permission to edit this album.")
+            return redirect('home')
 
         if 'id' in request.POST:
             photo = get_object_or_404(Photo, pk=request.POST['id'])
@@ -102,45 +125,46 @@ class GalleryView(View):
 def album_view(request, pk):
     album = get_object_or_404(Album, pk=pk)
 
+    access = get_access_to_album(request.user, album)
+
+    if access is None:
+        if request.user.is_authenticated:
+            messages.warning(request, "You don't have permission to view this album.")
+            return redirect('home')
+
+        return redirect('/account/login/?next=' + reverse('album', kwargs={'pk': pk}))
+
     def remove_photo(photo):
         album.photos.remove(photo)
 
     def add_photo(photo):
         album.photos.add(photo)
 
-    access = get_access_to_album(request.user, album)
-
-    if access is None:
-        return redirect('/account/login/?next=' + reverse('album', kwargs={'pk': pk}))
-
     if access == Permission.AccessLevel.MANAGE:
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=album.read_only,
-                                   photos=album.photos.all(),
+                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                           for photo in album.photos.all()],
                                    handle_remove_photo=remove_photo,
                                    handle_add_photo=add_photo,
-                                   edit_link=reverse('album-edit', kwargs={'pk': album.pk}),
-                                   album_id=pk)(request)
+                                   edit_link=reverse('album-edit', kwargs={'pk': album.pk}))(request)
 
     if access == Permission.AccessLevel.READ:
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=True,
-                                   photos=album.photos.all(),
-                                   album_id=pk)(request)
+                                   photos=[(photo, f"By {photo.owner.pk}", None)
+                                           for photo in album.photos.all()])(request)
 
     if access == Permission.AccessLevel.WRITE:
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=album.read_only,
-                                   photos=album.photos.all(),
+                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                           for photo in album.photos.all()],
                                    handle_remove_photo=remove_photo,
-                                   handle_add_photo=add_photo,
-                                   album_id=pk)(request)
-
-    messages.warning(request, "You don't have permission to view this album.")
-    return redirect('home')
+                                   handle_add_photo=add_photo)(request)
 
 
 class AlbumsView(LoginRequiredMixin, TemplateView):
@@ -166,18 +190,20 @@ class AlbumsView(LoginRequiredMixin, TemplateView):
 
 
 class PersonsView(LoginRequiredMixin, TemplateView):
-    template_name = "albums/persons.html"
+    template_name = "albums/album.html"
 
     def get_context_data(self, **kwargs):
         unnamed = Person.objects.filter(owner=self.request.user, name__exact="Unknown", nameable=True)
         named = Person.objects.filter(owner=self.request.user, nameable=True).difference(unnamed)
 
-        return {
-            'persons_dict': [
-                ('Named persons', named),
-                ('Unnamed persons', unnamed)
-            ]
-        }
+        context = super().get_context_data(**kwargs)
+        context.update({'title': "Identified Persons",
+                        'description': "Each person whose face was detected will appear here.",
+                        'photos': [(p.thumbnail, p.name, reverse("person", kwargs={'pk': p.pk})) for p in named] + [
+                            (p.thumbnail, "Unnamed", reverse("person", kwargs={'pk': p.pk})) for p in unnamed],
+                        'read_only': True,
+                        'edit_link': None})
+        return context
 
 
 @login_required()
@@ -188,19 +214,21 @@ def my_photos_view(request):
     return GalleryView.as_view(title=f"Your Photos",
                                description="All your photos will appear here.",
                                read_only=False,
-                               photos=Photo.objects.filter(owner=request.user),
+                               photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                       for photo in Photo.objects.filter(owner=request.user)],
                                handle_remove_photo=remove_photo,
                                handle_add_photo=lambda photo: None)(request)
 
 
-def face_view(request, pk):
+def person_view(request, pk):
     person = get_object_or_404(Person, pk=pk)
 
     return GalleryView.as_view(title=f"{person.name}'s Photos",
                                description=f"All photos of {person.name} will appear here.",
                                read_only=True,
                                edit_link=reverse('face-edit', kwargs={'pk': person.pk}),
-                               photos=person.photos.all())(request)
+                               photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                       for photo in person.photos.all()])(request)
 
 
 class FaceEditView(UserPassesTestMixin, UpdateView):
@@ -212,4 +240,4 @@ class FaceEditView(UserPassesTestMixin, UpdateView):
         return self.request.user == self.get_object().owner
 
     def get_success_url(self):
-        return reverse('face', kwargs={'pk': self.object.pk})
+        return reverse('person', kwargs={'pk': self.object.pk})

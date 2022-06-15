@@ -1,5 +1,6 @@
 import os
 
+from background_task import background
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
@@ -34,6 +35,21 @@ def activate_account(request, uidb64, token, *args, **kwargs):
         return redirect('home')
 
 
+@background()
+def send_activation_email(domain, user_pk):
+    user = User.objects.get(pk=user_pk)
+
+    msg = render_to_string("users/confirmation_email.html", {
+        'user': user,
+        'domain': domain,
+        'uid': urlsafe_base64_encode(force_bytes(user_pk)),
+        'token': account_activation_token.make_token(user),
+    })
+
+    send_mail('Activate your account - FaceIt', msg, os.environ['EMAIL_USER'], [user.email],
+              html_message=msg)
+
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -45,15 +61,7 @@ def signup(request):
             user.is_active = False
             user.save()
 
-            msg = render_to_string("users/confirmation_email.html", {
-                'user': user,
-                'domain': get_current_site(request).domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-
-            send_mail('Activate your account - FaceIt', msg, os.environ['EMAIL_USER'], [user.email],
-                      html_message=msg)
+            send_activation_email(get_current_site(request).domain, user.pk)
 
             messages.success(request, f'Your account has been created! Please confirm email address.')
             return redirect('home')
