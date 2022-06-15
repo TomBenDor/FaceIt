@@ -36,9 +36,6 @@ def on_photo_delete(sender, instance, **kwargs):
     if Person.objects.filter(thumbnail=instance).exists():
         person = Person.objects.get(thumbnail=instance)
 
-        if person.photos.count() == 1:
-            person.nameable = False
-
         for photo in person.photos.all():
             if photo.pk != instance.pk:
                 if Person.objects.filter(photos__in=[photo.pk]).count() == 1:
@@ -46,5 +43,6 @@ def on_photo_delete(sender, instance, **kwargs):
                     break
         else:
             person.nameable = False
+            person.thumbnail = None
 
         person.save()

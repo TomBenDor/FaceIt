@@ -67,4 +67,4 @@ class Person(models.Model):
 
     nameable = models.BooleanField(default=False)
 
-    thumbnail = models.ForeignKey(Photo, on_delete=models.SET_NULL, null=True, blank=True, related_name='thumbnail')
+    thumbnail = models.ForeignKey(Photo, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='thumbnail')
