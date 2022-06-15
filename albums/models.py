@@ -8,7 +8,7 @@ from users.models import User
 
 
 def get_upload_path(instance, filename):
-    return os.path.join('photos', str(instance.owner.pk), filename, "-", str(uuid.uuid4()))
+    return os.path.join('photos', str(instance.owner.pk), filename, str(uuid.uuid4()))
 
 
 class Album(models.Model):

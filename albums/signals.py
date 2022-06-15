@@ -41,7 +41,7 @@ def on_photo_delete(sender, instance, **kwargs):
 
         for photo in person.photos.all():
             if photo.pk != instance.pk:
-                if Person.objects.filter(photos__in=[photo.pk]) == 1:
+                if Person.objects.filter(photos__in=[photo.pk]).count() == 1:
                     person.thumbnail = photo
                     break
         else:
