@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (PhotoView, AlbumCreateView, home_view, AlbumsView, my_photos_view, album_view, AlbumEditView,
-                    face_view, FaceEditView, PersonsView)
+                    person_view, FaceEditView, PersonsView)
 
 urlpatterns = [
     path('', home_view, name='home'),
@@ -12,6 +12,6 @@ urlpatterns = [
     path('photo/<str:pk>', PhotoView.as_view(), name='photo'),
     path('create-album/', AlbumCreateView.as_view(), name='create-album'),
     path('persons/', PersonsView.as_view(), name='persons'),
-    path('face/<str:pk>', face_view, name='face'),
-    path('face/<str:pk>/edit', FaceEditView.as_view(), name='face-edit'),
+    path('person/<str:pk>', person_view, name='person'),
+    path('person/<str:pk>/edit', FaceEditView.as_view(), name='face-edit'),
 ]

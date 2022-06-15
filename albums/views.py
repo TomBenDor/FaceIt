@@ -198,8 +198,8 @@ class PersonsView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context.update({'title': "Identified Persons",
                         'description': "Each person whose face was detected will appear here.",
-                        'photos': [(p.thumbnail, p.name, reverse("face", kwargs={'pk': p.pk})) for p in named] + [
-                            (p.thumbnail, "Unnamed", reverse("face", kwargs={'pk': p.pk})) for p in unnamed],
+                        'photos': [(p.thumbnail, p.name, reverse("person", kwargs={'pk': p.pk})) for p in named] + [
+                            (p.thumbnail, "Unnamed", reverse("person", kwargs={'pk': p.pk})) for p in unnamed],
                         'read_only': True,
                         'edit_link': None})
         return context
@@ -219,7 +219,7 @@ def my_photos_view(request):
                                handle_add_photo=lambda photo: None)(request)
 
 
-def face_view(request, pk):
+def person_view(request, pk):
     person = get_object_or_404(Person, pk=pk)
 
     return GalleryView.as_view(title=f"{person.name}'s Photos",
@@ -239,4 +239,4 @@ class FaceEditView(UserPassesTestMixin, UpdateView):
         return self.request.user == self.get_object().owner
 
     def get_success_url(self):
-        return reverse('face', kwargs={'pk': self.object.pk})
+        return reverse('person', kwargs={'pk': self.object.pk})
