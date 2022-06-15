@@ -45,8 +45,12 @@ class Permission(models.Model):
 
 class Photo(models.Model):
     id = models.CharField(primary_key=True, default=uuid.uuid4, editable=False, max_length=256)
+
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
     image = models.ImageField(upload_to=get_upload_path)
+
+    persons = models.ManyToManyField('Person', blank=True)
 
     def delete(self, **kwargs):
         self.image.delete()
@@ -65,4 +69,4 @@ class Person(models.Model):
 
     nameable = models.BooleanField(default=False)
 
-    thumbnail = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, blank=True, related_name='thumbnail')
+    thumbnail = models.ForeignKey(Photo, on_delete=models.SET_NULL, null=True, blank=True, related_name='thumbnail')
