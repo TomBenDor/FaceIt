@@ -2,9 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.http import HttpResponseNotFound
-from django.shortcuts import redirect, get_object_or_404, render
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
-from django.views import View
 from django.views.generic import DetailView, CreateView, UpdateView, TemplateView
 from django.views.generic.edit import FormMixin
 
@@ -86,7 +85,8 @@ def home_view(request):
     return redirect('my-albums')
 
 
-class GalleryView(View):
+class GalleryView(TemplateView):
+    template_name = 'albums/album.html'
     title = ''
     description = ''
     photos = None
@@ -94,12 +94,15 @@ class GalleryView(View):
     handle_remove_photo = None
     handle_add_photo = None
     edit_link = None
-    album_id = None
 
-    def get(self, request):
-        return render(request, 'albums/album.html',
-                      {'title': self.title, 'description': self.description, 'photos': self.photos,
-                       'read_only': self.read_only, 'edit_link': self.edit_link, 'album_id': self.album_id})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'title': self.title,
+                        'description': self.description,
+                        'photos': self.photos,
+                        'read_only': self.read_only,
+                        'edit_link': self.edit_link})
+        return context
 
     def post(self, request):
         if self.read_only:
@@ -137,27 +140,27 @@ def album_view(request, pk):
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=album.read_only,
-                                   photos=album.photos.all(),
+                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                           for photo in album.photos.all()],
                                    handle_remove_photo=remove_photo,
                                    handle_add_photo=add_photo,
-                                   edit_link=reverse('album-edit', kwargs={'pk': album.pk}),
-                                   album_id=pk)(request)
+                                   edit_link=reverse('album-edit', kwargs={'pk': album.pk}))(request)
 
     if access == Permission.AccessLevel.READ:
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=True,
-                                   photos=album.photos.all(),
-                                   album_id=pk)(request)
+                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                           for photo in album.photos.all()])(request)
 
     if access == Permission.AccessLevel.WRITE:
         return GalleryView.as_view(title=album.title,
                                    description=album.description,
                                    read_only=album.read_only,
-                                   photos=album.photos.all(),
+                                   photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                           for photo in album.photos.all()],
                                    handle_remove_photo=remove_photo,
-                                   handle_add_photo=add_photo,
-                                   album_id=pk)(request)
+                                   handle_add_photo=add_photo)(request)
 
     messages.warning(request, "You don't have permission to view this album.")
     return redirect('home')
@@ -186,18 +189,20 @@ class AlbumsView(LoginRequiredMixin, TemplateView):
 
 
 class PersonsView(LoginRequiredMixin, TemplateView):
-    template_name = "albums/persons.html"
+    template_name = "albums/album.html"
 
     def get_context_data(self, **kwargs):
         unnamed = Person.objects.filter(owner=self.request.user, name__exact="Unknown", nameable=True)
         named = Person.objects.filter(owner=self.request.user, nameable=True).difference(unnamed)
 
-        return {
-            'persons_dict': [
-                ('Named persons', named),
-                ('Unnamed persons', unnamed)
-            ]
-        }
+        context = super().get_context_data(**kwargs)
+        context.update({'title': "Identified Persons",
+                        'description': "Each person whose face was detected will appear here.",
+                        'photos': [(p.thumbnail, p.name, reverse("face", kwargs={'pk': p.pk})) for p in named] + [
+                            (p.thumbnail, "Unnamed", reverse("face", kwargs={'pk': p.pk})) for p in unnamed],
+                        'read_only': True,
+                        'edit_link': None})
+        return context
 
 
 @login_required()
@@ -208,7 +213,8 @@ def my_photos_view(request):
     return GalleryView.as_view(title=f"Your Photos",
                                description="All your photos will appear here.",
                                read_only=False,
-                               photos=Photo.objects.filter(owner=request.user),
+                               photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                       for photo in Photo.objects.filter(owner=request.user)],
                                handle_remove_photo=remove_photo,
                                handle_add_photo=lambda photo: None)(request)
 
@@ -220,7 +226,8 @@ def face_view(request, pk):
                                description=f"All photos of {person.name} will appear here.",
                                read_only=True,
                                edit_link=reverse('face-edit', kwargs={'pk': person.pk}),
-                               photos=person.photos.all())(request)
+                               photos=[(photo, f"By {photo.owner.pk}", reverse("photo", kwargs={'pk': photo.pk}))
+                                       for photo in person.photos.all()])(request)
 
 
 class FaceEditView(UserPassesTestMixin, UpdateView):

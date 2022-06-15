@@ -64,3 +64,5 @@ class Person(models.Model):
     photos = models.ManyToManyField(Photo, blank=True)
 
     nameable = models.BooleanField(default=False)
+
+    thumbnail = models.ForeignKey(Photo, on_delete=models.CASCADE, null=True, blank=True, related_name='thumbnail')

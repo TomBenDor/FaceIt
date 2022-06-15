@@ -16,8 +16,11 @@ def identify_faces(photo_pk):
         person, _ = Person.objects.get_or_create(pk=id, defaults={'name': 'Unknown'},
                                                  owner=photo.owner)
         person.photos.add(photo)
-        if len(person_ids) == 1:
+
+        if not person.nameable and len(person_ids) == 1:
             person.nameable = True
+            person.thumbnail = photo
+
         person.save()
 
 

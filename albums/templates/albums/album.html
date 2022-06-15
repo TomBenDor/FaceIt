@@ -56,19 +56,21 @@
             </section>
         {% endif %}
         <section class="container gallery">
-            {% for photo in photos %}
+            {% for photo, text, link in photos %}
                 <span class="gallery__item" id="{{ photo.pk }}">
-                {% if request.user == photo.owner %}
-                    <a href="{% url 'photo' photo.pk %}" class="gallery__link">
+                {% if link %}
+                    <a href="{{ link }}" class="gallery__link">
                 {% else %}
                     <a class="gallery__link">
                 {% endif %}
                     <div class="gallery__thumb">
-                            <img src="{{ photo.image.url }}"
-                                 alt=""
-                                 class="gallery__image">
+                        <img src="{{ photo.image.url }}"
+                             alt="Photo"
+                             class="gallery__image">
+                        {% if text %}
+                            <text-muted class="gallery__caption">{{ text }}</text-muted>
+                        {% endif %}
                         {% if not read_only %}
-                            <text-muted class="gallery__caption">By {{ photo.owner.username }}</text-muted>
                             <button type="button" onclick="deletePhoto('{{ photo.pk }}'); return false;"
                                     class="gallery__remove">
                                     <i class="fa fa-trash"></i>
