@@ -10,3 +10,5 @@ def get_access_to_album(user, album):
 
     if Permission.objects.filter(user=user, album=album).exists():
         return Permission.objects.get(user=user, album=album).access
+
+    return Permission.AccessLevel.READ if album.allow_anonymous_view else None

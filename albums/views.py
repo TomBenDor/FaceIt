@@ -125,16 +125,20 @@ class GalleryView(TemplateView):
 def album_view(request, pk):
     album = get_object_or_404(Album, pk=pk)
 
+    access = get_access_to_album(request.user, album)
+
+    if access is None:
+        if request.user.is_authenticated:
+            messages.warning(request, "You don't have permission to view this album.")
+            return redirect('home')
+
+        return redirect('/account/login/?next=' + reverse('album', kwargs={'pk': pk}))
+
     def remove_photo(photo):
         album.photos.remove(photo)
 
     def add_photo(photo):
         album.photos.add(photo)
-
-    access = get_access_to_album(request.user, album)
-
-    if access is None:
-        return redirect('/account/login/?next=' + reverse('album', kwargs={'pk': pk}))
 
     if access == Permission.AccessLevel.MANAGE:
         return GalleryView.as_view(title=album.title,
@@ -161,9 +165,6 @@ def album_view(request, pk):
                                            for photo in album.photos.all()],
                                    handle_remove_photo=remove_photo,
                                    handle_add_photo=add_photo)(request)
-
-    messages.warning(request, "You don't have permission to view this album.")
-    return redirect('home')
 
 
 class AlbumsView(LoginRequiredMixin, TemplateView):
