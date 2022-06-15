@@ -50,8 +50,6 @@ class Photo(models.Model):
 
     image = models.ImageField(upload_to=get_upload_path)
 
-    persons = models.ManyToManyField('Person', blank=True)
-
     def delete(self, **kwargs):
         self.image.delete()
 
