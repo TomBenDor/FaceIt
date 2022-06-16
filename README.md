@@ -21,6 +21,10 @@
 - `AWS S3` for storing photos
 - `Azure Cognitive Services` for face recognition
 
+# Architecture
+
+![image](https://user-images.githubusercontent.com/36517134/174063884-3ca70b73-b0c6-47ba-9c80-3946351d0f5a.png)
+
 # Installation
 
 FaceIt requires the following environment variables:
