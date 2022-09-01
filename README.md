@@ -12,6 +12,9 @@
     - Detection of faces in photos
     - Naming of detected faces
 
+# Demo
+![image](https://user-images.githubusercontent.com/36517134/187902073-4daa897f-2275-408e-8163-f7b654e0522e.png)
+
 # Technical details
 
 - Written in `Python` using the `Django` framework.
